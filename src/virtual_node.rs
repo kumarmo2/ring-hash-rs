@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{borrow::Borrow, rc::Rc};
 
 use crate::{node::Node, utils};
 
@@ -7,6 +7,12 @@ pub struct VirtualNode {
     pub node: Rc<Node>,
     pub id_per_node: usize,
     pub(crate) hash: String,
+}
+
+impl Borrow<str> for VirtualNode {
+    fn borrow(&self) -> &str {
+        self.hash.as_str()
+    }
 }
 
 impl VirtualNode {

@@ -7,6 +7,13 @@ pub struct Ring {
     num_of_nodes: usize,
     virtual_nodes_per_node: usize,
 }
+/*
+ * TODO:
+ * - if the node already has been added in the ring, return Err.
+ * - remove heap allocations if possible
+ *
+ *
+ * */
 
 /*
 * NOTE:
@@ -35,7 +42,9 @@ impl Ring {
         Some(
             &self
                 .virtual_nodes
-                .get(utils::cyclic_binary_search(&self.virtual_nodes, &target_hash).unwrap())
+                .get(
+                    utils::cyclic_binary_search(&self.virtual_nodes, target_hash.as_str()).unwrap(),
+                )
                 .unwrap()
                 .node,
         )
@@ -56,10 +65,3 @@ impl Ring {
         self.num_of_nodes += 1;
     }
 }
-/*
- * TODO:
- * - if the node already has been added in the ring, return Err.
- * - remove heap allocations if possible
- *
- *
- * */

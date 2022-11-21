@@ -1,4 +1,4 @@
-use crate::virtual_node::VirtualNode;
+use std::borrow::Borrow;
 
 pub(crate) fn get_hash(input: &str) -> String {
     md5::compute(input)
@@ -8,8 +8,14 @@ pub(crate) fn get_hash(input: &str) -> String {
         .join("-")
 }
 
-// TODO: make it generic over T if possible.
-pub(crate) fn cyclic_binary_search<'a>(items: &'a [VirtualNode], target: &'_ str) -> Option<usize> {
+pub(crate) fn cyclic_binary_search<Owned, Borrowed>(
+    items: &[Owned],
+    target: &Borrowed,
+) -> Option<usize>
+where
+    Owned: Borrow<Borrowed>,
+    Borrowed: Ord + ?Sized,
+{
     let n = items.len();
     let mut left = 0;
     let mut right = n - 1;
@@ -22,10 +28,10 @@ pub(crate) fn cyclic_binary_search<'a>(items: &'a [VirtualNode], target: &'_ str
         mid = (left + right) / 2;
         let mid_value = items.get(mid).unwrap();
 
-        if mid_value.hash == target {
+        if *mid_value.borrow() == *target {
             return Some(mid);
         }
-        if target > &mid_value.hash {
+        if *target > *mid_value.borrow() {
             left = mid + 1;
         } else {
             if mid == 0 {
@@ -41,10 +47,7 @@ pub(crate) fn cyclic_binary_search<'a>(items: &'a [VirtualNode], target: &'_ str
     } else if left > n - 1 {
         return Some(0);
     } else {
-        // let left_value = *items.get(left).unwrap();
-        // let right_value = *items.get(right).unwrap();
-
-        if items.get(right).unwrap().hash.as_str() > target {
+        if *items.get(right).unwrap().borrow() > *target {
             return Some(right);
         }
         return Some(left);
