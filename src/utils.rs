@@ -8,10 +8,40 @@ pub(crate) fn get_hash(input: &str) -> String {
         .join("-")
 }
 
-pub(crate) fn cyclic_binary_search<Owned, Borrowed>(
-    items: &[Owned],
-    target: &Borrowed,
-) -> Option<usize>
+pub(crate) fn binary_search<Owned, Borrowed>(items: &[Owned], target: &Borrowed) -> Option<usize>
+where
+    Owned: Borrow<Borrowed>,
+    Borrowed: Ord + ?Sized,
+{
+    let n = items.len();
+    if n == 0 {
+        return None;
+    }
+
+    let mut left = 0;
+    let mut right = n - 1;
+
+    loop {
+        if left > right {
+            return None;
+        }
+        let mid = (left + right) / 2;
+        let value = items.get(mid).unwrap();
+
+        if *value.borrow() == *target {
+            return Some(mid);
+        }
+        if *target > *value.borrow() {
+            left = mid + 1;
+        } else {
+            if mid == 0 {
+                return None;
+            }
+            right = mid - 1
+        }
+    }
+}
+pub(crate) fn cyclic_binary_search<Owned, Borrowed>(items: &[Owned], target: &Borrowed) -> usize
 where
     Owned: Borrow<Borrowed>,
     Borrowed: Ord + ?Sized,
@@ -29,7 +59,7 @@ where
         let mid_value = items.get(mid).unwrap();
 
         if *mid_value.borrow() == *target {
-            return Some(mid);
+            return mid;
         }
         if *target > *mid_value.borrow() {
             left = mid + 1;
@@ -43,13 +73,13 @@ where
 
     if mid == 0 {
         // - target is smaller than the smallest item.
-        return Some(0);
+        return 0;
     } else if left > n - 1 {
-        return Some(0);
+        return 0;
     } else {
         if *items.get(right).unwrap().borrow() > *target {
-            return Some(right);
+            return right;
         }
-        return Some(left);
+        return left;
     }
 }

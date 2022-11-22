@@ -42,16 +42,25 @@ impl Ring {
         Some(
             &self
                 .virtual_nodes
-                .get(
-                    utils::cyclic_binary_search(&self.virtual_nodes, target_hash.as_str()).unwrap(),
-                )
+                .get(utils::cyclic_binary_search(
+                    &self.virtual_nodes,
+                    target_hash.as_str(),
+                ))
                 .unwrap()
                 .node,
         )
     }
 
-    pub fn add_node(&mut self, node: Node) {
+    pub fn add_node(&mut self, node: Node) -> Result<(), String> {
         let cloned = Rc::new(node);
+        let virtual_node = VirtualNode::from_node(Rc::clone(&cloned), 0).unwrap();
+
+        if let Some(_) = utils::binary_search(&self.virtual_nodes, &virtual_node) {
+            // TODO: instead of using Strings for Errors, use Enums
+            return Err("Node with same identity has already been added".to_owned());
+        }
+
+        let cloned = Rc::clone(&cloned);
         for index in 0..self.virtual_nodes_per_node {
             let node = Rc::clone(&cloned);
 
@@ -59,9 +68,8 @@ impl Ring {
             self.virtual_nodes
                 .push(VirtualNode::from_node(node, index).unwrap());
         }
-
         self.virtual_nodes.sort();
-
         self.num_of_nodes += 1;
+        Ok(())
     }
 }
