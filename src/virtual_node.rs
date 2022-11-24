@@ -5,29 +5,29 @@ use std::{borrow::Borrow, sync::Arc};
 use crate::{node::Node, utils};
 
 #[derive(Debug)]
-pub struct VirtualNode<T>
+pub struct VirtualNode<'id, T>
 where
-    T: Copy + Eq + Hash + ?Sized,
+    T: Eq + Hash + ?Sized,
 {
-    pub node: Arc<Node<T>>,
+    pub node: Arc<Node<'id, T>>,
     pub id_per_node: usize,
     pub(crate) hash: String,
 }
 
-impl<T> Borrow<str> for VirtualNode<T>
+impl<'id, T> Borrow<str> for VirtualNode<'id, T>
 where
-    T: Copy + Eq + Hash + ?Sized,
+    T: Eq + Hash + ?Sized,
 {
     fn borrow(&self) -> &str {
         self.hash.as_str()
     }
 }
 
-impl<T> VirtualNode<T>
+impl<'id, T> VirtualNode<'id, T>
 where
-    T: Copy + Eq + Hash + ?Sized,
+    T: Eq + Hash + ?Sized,
 {
-    pub(crate) fn from_node(node: Arc<Node<T>>, id_per_node: usize) -> Result<Self, String> {
+    pub(crate) fn from_node(node: Arc<Node<'id, T>>, id_per_node: usize) -> Result<Self, String> {
         // TODO: check if the default hasher can be re-used multiple time.
         let mut hasher = DefaultHasher::new();
         node.as_ref().identifier.hash(&mut hasher);
@@ -48,29 +48,29 @@ where
 
 // TODO: understand the below traits: Eq, PartialOrd, PartialEq, Ord
 
-impl<T> PartialEq for VirtualNode<T>
+impl<'id, T> PartialEq for VirtualNode<'id, T>
 where
-    T: Copy + Eq + Hash + ?Sized,
+    T: Eq + Hash + ?Sized,
 {
     fn eq(&self, other: &Self) -> bool {
         self.hash.eq(&other.hash)
     }
 }
 
-impl<T> Eq for VirtualNode<T> where T: Copy + Eq + Hash + ?Sized {}
+impl<'id, T> Eq for VirtualNode<'id, T> where T: Eq + Hash + ?Sized {}
 
-impl<T> PartialOrd for VirtualNode<T>
+impl<'id, T> PartialOrd for VirtualNode<'id, T>
 where
-    T: Copy + Eq + Hash + ?Sized,
+    T: Eq + Hash + ?Sized,
 {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.hash.cmp(&other.hash))
     }
 }
 
-impl<T> Ord for VirtualNode<T>
+impl<'id, T> Ord for VirtualNode<'id, T>
 where
-    T: Copy + Eq + Hash + ?Sized,
+    T: Eq + Hash + ?Sized,
 {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.hash.cmp(&other.hash)

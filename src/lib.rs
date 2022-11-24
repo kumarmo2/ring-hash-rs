@@ -21,7 +21,7 @@ use ring::Ring;
 * - See if I can remove the trait bound on T for "Copy" in Node<T>. This got introduced when I
 *    made the `ring` thread safe. I had to introduce "Lock" for the ring. Because of which I
 *    couldn't return references from the ring. Since, I couldn't expose the references, I
-*    introduced the Copy constraint on T, so that it can be returned easily.
+*    introduced the Copy constraint on T, so that it can be returned easily. [Done]
 * - provide correct access modifiers, right now most of those are public.
 *
 *
@@ -32,14 +32,16 @@ fn lets_see_if_it_works_for_ipv4() {
     let r = Ring::create_ring(10);
 
     let mut ring = r.unwrap(); // here we are just asseting that r cannot be an Err.
-
-    let node = Node::new(Ipv4Addr::new(192, 1, 1, 1));
+    let ip1 = Ipv4Addr::new(192, 1, 1, 1);
+    let node = Node::new(&ip1);
     ring.add_node(node).unwrap();
 
-    let node = Node::new(Ipv4Addr::new(192, 1, 1, 2));
+    let ip2 = Ipv4Addr::new(192, 1, 1, 2);
+    let node = Node::new(&ip2);
     ring.add_node(node).unwrap();
 
-    let node = Node::new(Ipv4Addr::new(192, 1, 1, 3));
+    let ip3 = Ipv4Addr::new(192, 1, 1, 3);
+    let node = Node::new(&ip3);
     ring.add_node(node).unwrap();
 
     let lock = ring.virtual_nodes.read().unwrap();
@@ -53,33 +55,80 @@ fn lets_see_if_it_works_for_ipv4() {
     println!("input hash: {}", utils::get_hash(input));
 
     assert_eq!(
-        ring.assign_node(input).unwrap(),
-        Ipv4Addr::new(192, 1, 1, 2)
+        *ring.assign_node(input).unwrap(),
+        ip2 // Ipv4Addr::new(192, 1, 1, 2)
     );
 
     let input = "40";
     println!("input hash: {}", utils::get_hash(input));
 
     assert_eq!(
-        ring.assign_node(input).unwrap(),
-        Ipv4Addr::new(192, 1, 1, 3)
+        *ring.assign_node(input).unwrap(),
+        ip3,
+        // Ipv4Addr::new(192, 1, 1, 3)
     );
 
     let input = "50";
     println!("input hash: {}", utils::get_hash(input));
 
     assert_eq!(
-        ring.assign_node(input).unwrap(),
-        Ipv4Addr::new(192, 1, 1, 1)
+        *ring.assign_node(input).unwrap(),
+        ip1 // Ipv4Addr::new(192, 1, 1, 1)
     );
 
     let input = "-1df";
     println!("input hash: {}", utils::get_hash(input));
 
     assert_eq!(
-        ring.assign_node(input).unwrap(),
-        Ipv4Addr::new(192, 1, 1, 3)
+        *ring.assign_node(input).unwrap(),
+        ip3 // Ipv4Addr::new(192, 1, 1, 3)
     );
+}
+
+#[test]
+fn lets_see_if_it_works_for_str() {
+    let r = Ring::create_ring(10);
+
+    let mut ring = r.unwrap(); // here we are just asseting that r cannot be an Err.
+
+    let id_10 = "10";
+    let node = Node::new(id_10);
+    ring.add_node(node).unwrap();
+
+    let id_20 = "20";
+    let node = Node::new(id_20);
+    ring.add_node(node).unwrap();
+
+    let id_30 = "30";
+    let node = Node::new(id_30);
+    ring.add_node(node).unwrap();
+
+    let lock = ring.virtual_nodes.read().unwrap();
+
+    // NOTE: these println are here so to know the hash for the inputs and nodes.
+    for vn in lock.iter() {
+        println!("vn: {:?}", vn);
+    }
+
+    let input = "30";
+    println!("input hash: {}", utils::get_hash(input));
+
+    assert_eq!(ring.assign_node(input).unwrap(), id_30);
+
+    let input = "40";
+    println!("input hash: {}", utils::get_hash(input));
+
+    assert_eq!(ring.assign_node(input).unwrap(), id_30);
+
+    let input = "50";
+    println!("input hash: {}", utils::get_hash(input));
+
+    assert_eq!(ring.assign_node(input).unwrap(), id_30);
+
+    let input = "-1df";
+    println!("input hash: {}", utils::get_hash(input));
+
+    assert_eq!(ring.assign_node(input).unwrap(), id_10);
 }
 
 #[test]
@@ -88,13 +137,16 @@ fn lets_see_if_it_works() {
 
     let mut ring = r.unwrap(); // here we are just asseting that r cannot be an Err.
 
-    let node = Node::new(10);
+    let id_10 = 10;
+    let node = Node::new(&id_10);
     ring.add_node(node).unwrap();
 
-    let node = Node::new(20);
+    let id_20 = 20;
+    let node = Node::new(&id_20);
     ring.add_node(node).unwrap();
 
-    let node = Node::new(30);
+    let id_30 = 30;
+    let node = Node::new(&id_30);
     ring.add_node(node).unwrap();
 
     let lock = ring.virtual_nodes.read().unwrap();
@@ -107,29 +159,30 @@ fn lets_see_if_it_works() {
     let input = "30";
     println!("input hash: {}", utils::get_hash(input));
 
-    assert_eq!(ring.assign_node(input).unwrap(), 20);
+    assert_eq!(*ring.assign_node(input).unwrap(), id_20);
 
     let input = "40";
     println!("input hash: {}", utils::get_hash(input));
 
-    assert_eq!(ring.assign_node(input).unwrap(), 30);
+    assert_eq!(*ring.assign_node(input).unwrap(), id_30);
 
     let input = "50";
     println!("input hash: {}", utils::get_hash(input));
 
-    assert_eq!(ring.assign_node(input).unwrap(), 20);
+    assert_eq!(*ring.assign_node(input).unwrap(), id_20);
 
     let input = "-1df";
     println!("input hash: {}", utils::get_hash(input));
 
-    assert_eq!(ring.assign_node(input).unwrap(), 30);
+    assert_eq!(*ring.assign_node(input).unwrap(), id_30);
 }
 
 #[test]
 fn multiple_nodes_with_same_identity_added_returns_error() {
     let mut ring = Ring::create_ring(3).unwrap();
-    let n1 = Node::new(101);
-    let n2 = Node::new(101);
+    let id = 101;
+    let n1 = Node::new(&id);
+    let n2 = Node::new(&id);
     ring.add_node(n1).unwrap();
     assert_eq!(
         ring.add_node(n2).err().unwrap().as_str(),
@@ -144,11 +197,11 @@ fn multiple_nodes_with_same_ipv4_identity_added_returns_error() {
     let ip1 = Ipv4Addr::new(127, 0, 0, 1);
     let ip2 = Ipv4Addr::new(127, 0, 0, 1);
 
-    let n1 = Node::new(ip1);
+    let n1 = Node::new(&ip1);
 
     ring.add_node(n1).unwrap();
 
-    let n2 = Node::new(ip2);
+    let n2 = Node::new(&ip2);
     assert_eq!(
         ring.add_node(n2).err().unwrap().as_str(),
         "Node with same identity has already been added"
@@ -159,10 +212,12 @@ fn multiple_nodes_with_same_ipv4_identity_added_returns_error() {
 fn assign_node_in_multi_threaded_env() {
     let mut ring = Ring::create_ring(3).unwrap();
 
-    let n1 = Node::new(101);
+    let id_101 = 101;
+    let n1 = Node::new(&id_101);
     ring.add_node(n1).unwrap();
 
-    let n1 = Node::new(102);
+    let id_102 = 102;
+    let n1 = Node::new(&id_102);
     ring.add_node(n1).unwrap();
 
     std::thread::scope(|s| {
