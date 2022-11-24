@@ -1,16 +1,15 @@
+use std::hash::Hash;
 #[derive(Debug)]
-pub struct Node {
-    pub identifier: String,
+pub struct Node<T>
+where
+    T: Copy + Eq + Hash + ?Sized,
+{
+    pub identifier: T,
 }
 
-impl Node {
-    pub fn new(identifier: String) -> Self {
+// TODO: write comments why these trait bounds are needed.
+impl<T: Copy + Eq + Hash + ?Sized> Node<T> {
+    pub fn new(identifier: T) -> Self {
         Self { identifier }
-    }
-
-    pub fn from_str(identifier: &str) -> Self {
-        Node {
-            identifier: identifier.to_owned(),
-        }
     }
 }

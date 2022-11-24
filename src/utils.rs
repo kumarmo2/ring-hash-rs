@@ -1,12 +1,34 @@
+// use md5::Digest;
 use std::borrow::Borrow;
 
-pub(crate) fn get_hash(input: &str) -> String {
+pub(crate) fn get_hash<T>(input: &T) -> String
+where
+    T: AsRef<[u8]> + ?Sized,
+{
     md5::compute(input)
         .iter()
         .map(|b| format!("{:02x}", b).to_string())
         .collect::<Vec<String>>()
         .join("-")
 }
+
+// pub(crate) fn get_hash<T>(input: &T) -> String
+// where
+// {
+// md5::compute()
+// .iter()
+// .map(|b| format!("{:02x}", b).to_string())
+// .collect::<Vec<String>>()
+// .join("-")
+// }
+
+// pub(crate) fn get_hash(input: &str) -> String {
+// md5::compute(input)
+// .iter()
+// .map(|b| format!("{:02x}", b).to_string())
+// .collect::<Vec<String>>()
+// .join("-")
+// }
 
 pub(crate) fn binary_search<Owned, Borrowed>(items: &[Owned], target: &Borrowed) -> Option<usize>
 where
