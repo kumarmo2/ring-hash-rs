@@ -48,6 +48,7 @@ where
             return None;
         }
         let mid = (left + right) / 2;
+        // This unwrap is safe.
         let value = items.get(mid).unwrap();
 
         if *value.borrow() == *target {

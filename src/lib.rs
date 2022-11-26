@@ -1,5 +1,6 @@
 pub mod ring;
 
+pub mod errors;
 pub mod node;
 mod utils;
 pub mod virtual_node;
@@ -8,6 +9,7 @@ use std::net::Ipv4Addr;
 use std::rc::Rc;
 use std::str::FromStr;
 
+use errors::RingError;
 use node::Node;
 use ring::Ring;
 
@@ -16,12 +18,13 @@ use ring::Ring;
 * - Make ring as thread safe so that can be used in concurrent environment, after the setup
 *    phase.[Done]
 * - cache the result for assign_node, so that if the same output is asked to be assigned,
-*    result can be send using cache.
+*    result can be send using cache. Also remember to invalidate cache .
 * - In the end, add the delete node as well.
 * - See if I can remove the trait bound on T for "Copy" in Node<T>. This got introduced when I
 *    made the `ring` thread safe. I had to introduce "Lock" for the ring. Because of which I
 *    couldn't return references from the ring. Since, I couldn't expose the references, I
 *    introduced the Copy constraint on T, so that it can be returned easily. [Done]
+* - Remove Arc and Lock from std and use from crate `parking_lot`.
 * - provide correct access modifiers, right now most of those are public.
 *
 *
@@ -185,8 +188,8 @@ fn multiple_nodes_with_same_identity_added_returns_error() {
     let n2 = Node::new(&id);
     ring.add_node(n1).unwrap();
     assert_eq!(
-        ring.add_node(n2).err().unwrap().as_str(),
-        "Node with same identity has already been added"
+        ring.add_node(n2).err().unwrap(),
+        RingError::NodeAlreadyExists
     )
 }
 
@@ -203,8 +206,8 @@ fn multiple_nodes_with_same_ipv4_identity_added_returns_error() {
 
     let n2 = Node::new(&ip2);
     assert_eq!(
-        ring.add_node(n2).err().unwrap().as_str(),
-        "Node with same identity has already been added"
+        ring.add_node(n2).err().unwrap(),
+        RingError::NodeAlreadyExists
     )
 }
 
